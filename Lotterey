@@ -1,40 +1,36 @@
-// CC  credit to code eater youtube channel 
-// SPDX-License-Identifier: GPL-3.0
+
+// SPDX-License-Identifier: MIT
 
 pragma solidity >=0.5.0 <0.9.0;
-
-
 contract Lottery{
-    address private manager ;
-    address payable[] public participent;
-
-    constructor() {
-        manager=msg.sender;
+    address public  manger;
+    address[] public  players;
+   constructor() {
+        manger = msg.sender;
     }
-
-    receive() external payable{
-        require(msg.value==2 ether );
-        participent.push(payable(msg.sender));
-        
+    function enter()public payable {
+        require(msg.value >= 2 ether);
+        players.push(msg.sender);
     }
-     function  getBalance() public view returns (uint ){
-         require(msg.sender== manager);
-         return address(this).balance;
+    function WinnerPlayer()public payable {
+        require(msg.sender == manger);
+        uint index= random() % players.length;
+        address winner = players[index];
+         players = new address[](0); // Reset the players array
+        payable(winner).transfer(address(this).balance);
 
-     } 
-     function random() public view returns (uint ){
-         return uint(keccak256(abi.encodePacked(block.difficulty,block.timestamp,participent.length)));
-     }
-     function Lotterywinner()public 
-     {
-         require(msg.sender== manager);
-         require(participent.length>=3);
-         uint r=random();
-         address payable winner;
-         uint index =r%participent.length;
-         winner=participent[index];
-         winner.transfer(getBalance());
-         participent= new address payable[](0);
 
-     }
+    }
+        function getPlayers() public view returns (address[] memory) {
+        return players;
+    }
+    function random()private view  returns(uint){
+        return uint(keccak256(abi.encodePacked(block.prevrandao, block.timestamp, players)));
+    }
+    modifier restricted() {
+        require(msg.sender == manger);
+        _;
+    }
+    //prevrandao
+
 }
